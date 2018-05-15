@@ -12,9 +12,9 @@
  * @package           Woompb
  *
  * @wordpress-plugin
- * Plugin Name:       Woompb
+ * Plugin Name:       Boleto Bradesco - WooMPB
  * Plugin URI:        www.icamas.com.br
- * Description:       This is a short description of what the plugin does. It's displayed in the WordPress admin area.
+ * Description:       Plugin para integração do woocommerce com o meio de pagamento bradesco. Boleto bancário.
  * Version:           1.0.0
  * Author:            Alex
  * Author URI:        alexbc.com.br
@@ -31,7 +31,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 /**
  * Currently plugin version.
- * Start at version 1.0.0 and use SemVer - https://semver.org
+ * Start at version 1.0.0
  * Rename this for your plugin and update it as you release new versions.
  */
 define( 'PLUGIN_NAME_VERSION', '1.0.0' );
@@ -77,16 +77,16 @@ add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'woompb_plugin
 
 
 /**
- * Offline Payment Gateway
+ * Meios de pagamento bradesco
  *
- * Provides an Offline Payment Gateway; mainly for testing purposes.
+ * Faz a integração do woocommerce com o boleto dos Meios de pagamento Bradesco.
  * We load it later to ensure WC is loaded first since we're extending it.
  *
  * @class 		WC_Gateway_Offline
  * @extends		WC_Payment_Gateway
  * @version		1.0.0
  * @package		WooCommerce/Classes/Payment
- * @author 		SkyVerge
+ * @author 		Alex
  */
 
 require_once(plugin_dir_path( __FILE__ ) . 'includes/BoletoBradesco.php');
@@ -105,7 +105,7 @@ function woompb_gateway_init() {
             $this->id                 = 'woompb';
             $this->icon               = apply_filters('woompb_icon', '');
             $this->has_fields         = false;
-            $this->method_title       = __( 'Woompb', 'woompb' );
+            $this->method_title       = __( 'Boleto Bradesco WooMPB', 'woompb' );
             $this->method_description = __( 'Emite os boletos do Bradesco.', 'woompb' );
 
             // Load the settings.
@@ -113,30 +113,38 @@ function woompb_gateway_init() {
             $this->init_settings();
 
             // Define user set variables
-            $this->title        = $this->get_option( 'title' );
-            $this->description  = $this->get_option( 'description' );
-            $this->chavedeseguranca  = $this->get_option( 'chavedeseguranca' );
-            $this->merchantid  = $this->get_option( 'merchantid' );
-            $this->beneficiario  = $this->get_option( 'beneficiario' );
-            $this->carteira  = $this->get_option( 'carteira' );
-            $this->diasvencimento  = $this->get_option( 'diasvencimento' );
-            $this->token  = $this->get_option( 'token' );
-            $this->urllogotipo  = $this->get_option( 'urllogotipo' );
-            $this->descricaopedido  = $this->get_option( 'descricaopedido' );
-            $this->instrucaolinha1  = $this->get_option( 'instrucaolinha1' );
-            $this->instrucaolinha2  = $this->get_option( 'instrucaolinha2' );
-            $this->instrucaolinha3  = $this->get_option( 'instrucaolinha3' );
-            $this->instrucaolinha4  = $this->get_option( 'instrucaolinha4' );
-            $this->mensagemcabecalho  = $this->get_option( 'mensagemcabecalho' );
-            $this->tiporenderizacao  = $this->get_option( 'tiporenderizacao' );
+            $this->title                =   $this->get_option( 'title' );
+            $this->enabled              =   $this->get_option( 'enabled' );
+            $this->producao             =   $this->get_option( 'producao' );
+            $this->description          =   $this->get_option( 'description' );
+            $this->chavedeseguranca     =   $this->get_option( 'chavedeseguranca' );
+            $this->merchantid           =   $this->get_option( 'merchantid' );
+            $this->beneficiario         =   $this->get_option( 'beneficiario' );
+            $this->carteira             =   $this->get_option( 'carteira' );
+            $this->diasvencimento       =   $this->get_option( 'diasvencimento' );
+            $this->token                =   $this->get_option( 'token' );
+            $this->urllogotipo          =   $this->get_option( 'urllogotipo' );
+            $this->descricaopedido      =   $this->get_option( 'descricaopedido' );
+            $this->instrucaolinha1      =   $this->get_option( 'instrucaolinha1' );
+            $this->instrucaolinha2      =   $this->get_option( 'instrucaolinha2' );
+            $this->instrucaolinha3      =   $this->get_option( 'instrucaolinha3' );
+            $this->instrucaolinha4      =   $this->get_option( 'instrucaolinha4' );
+            $this->mensagemcabecalho    =   $this->get_option( 'mensagemcabecalho' );
+            $this->tiporenderizacao     =   $this->get_option( 'tiporenderizacao' );
 
 
-            // Actions
-            add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
-            add_action( 'woocommerce_thankyou_' . $this->id, array( $this, 'thankyou_page' ),20,1 );
 
-            // Customer Emails
-            add_action( 'woocommerce_email_before_order_table', array( $this, 'email_instructions' ), 10, 3 );
+                // Actions
+                add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
+                add_action( 'woocommerce_thankyou_' . $this->id, array( $this, 'thankyou_page' ),20,1 );
+
+                // Customer Emails
+                add_action( 'woocommerce_email_before_order_table', array( $this, 'email_instructions' ), 10, 3 );
+
+                //for token confirmation
+                add_action( 'woocommerce_api_woompbtoken', array( $this, 'comfirm_token' ) );
+
+
         }
 
 
@@ -154,10 +162,17 @@ function woompb_gateway_init() {
                     'default' => 'yes'
                 ),
 
+                'producao' => array(
+                    'title'   => __( 'Trabalhar em produção?', 'woompb' ),
+                    'type'    => 'checkbox',
+                    'label'   => __( 'Marque para utilizar o ambiente de produção do bradesco. Deixe desmarcado para homologação.', 'woompb' ),
+                    'default' => 'no'
+                ),
+
                 'title' => array(
                     'title'       => __( 'Titulo', 'woompb' ),
                     'type'        => 'text',
-                    'description' => __( 'This controls the title for the payment method the customer sees during checkout.', 'woompb' ),
+                    'description' => __( 'Nome do método de pagamento que aparecerá para o cliente no checkout.', 'woompb' ),
                     'default'     => __( 'Pagamento por Boleto', 'woompb' ),
                     'desc_tip'    => true,
                 ),
@@ -165,8 +180,8 @@ function woompb_gateway_init() {
                 'description' => array(
                     'title'       => __( 'Description', 'woompb' ),
                     'type'        => 'textarea',
-                    'description' => __( 'Payment method description that the customer will see on your checkout.', 'woompb' ),
-                    'default'     => __( 'Please remit payment to Store Name upon pickup or delivery.', 'woompb' ),
+                    'description' => __( 'Descrição que aparecerá para o cliente no checkout. Abaixo do método de pagamento.', 'woompb' ),
+                    'default'     => __( 'O boleto será exibido na próxima página, após a finalização do pedido.', 'woompb' ),
                     'desc_tip'    => true,
                 ),
 
@@ -303,6 +318,20 @@ function woompb_gateway_init() {
         }
 
 
+        public function comfirm_token(){
+
+            $token_recebido = $_REQUEST['token'];
+
+
+            if($token_recebido == $this->token){
+                header( 'HTTP/1.1 200 OK' );
+            } else {
+                wp_die( __( 'Token não confirmado!', 'woompb' ) );
+            }
+
+        }
+
+
         /**
          * Output for the order received page.
          */
@@ -367,7 +396,7 @@ function woompb_gateway_init() {
             $boletoBradesco = new BoletoBradesco();
 
             $boletoBradesco
-                ->setProducao(false)
+                ->setProducao((bool)$this->producao)
                 ->setChaveDeSeguranca($this->chavedeseguranca) //2Hnx3EgTY8C4LcbNEDk13XQfbaR7d9IcXn4l402cx7M
                 ->setMerchantId($this->merchantid) //100004015
                 ->setNumeroPedido($order_number)
