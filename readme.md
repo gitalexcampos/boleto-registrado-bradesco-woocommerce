@@ -50,3 +50,5 @@ After you've done it all is time to homologation.
 For homologation send a email to: [homologacao@scopus.com.br](homologacao@scopus.com.br)
 
 For help or bugs send a email to contatooitoo@gmail.com.
+
+Read more in [alexbc.me](https://alexbc.me/ticket-bradesco-woocommerce).
